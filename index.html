@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Una carta para Andy</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%8C%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fredoka:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #c4dcec;
+    --sky-deep: #a9c9df;
+    --paper: #fffdf6;
+    --envelope: #f7ecd8;
+    --envelope-shade: #ecdcc0;
+    --heart: #f27c88;
+    --heart-deep: #d85d6b;
+    --ink: #3b3a52;
+    --duck: #ffc93c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Fredoka", system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,.55) 0, transparent 40%),
+      radial-gradient(circle at 85% 90%, var(--sky-deep) 0, transparent 45%),
+      var(--sky);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    overflow-x: hidden;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+
+  /* ---------- Pantalla del sobre ---------- */
+  .stage {
+    display: grid;
+    place-items: center;
+    gap: 1.6rem;
+    padding: 1.5rem;
+    transition: opacity .5s ease, transform .6s ease;
+  }
+  .for {
+    margin: 0;
+    font-family: "Caveat", cursive;
+    font-size: clamp(1.9rem, 6vw, 2.5rem);
+    font-weight: 700;
+    text-align: center;
+  }
+  .hint {
+    margin: 0;
+    font-size: 1rem;
+    opacity: .75;
+    animation: breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe { 50% { opacity: .35; } }
+
+  .envelope {
+    --w: min(360px, 84vw);
+    position: relative;
+    width: var(--w);
+    aspect-ratio: 3 / 2;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    perspective: 900px;
+    filter: drop-shadow(0 14px 18px rgba(59,58,82,.22));
+    transition: transform .25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .envelope:hover { transform: translateY(-4px) rotate(-1deg); }
+  .envelope:focus-visible { outline: 3px solid var(--heart-deep); outline-offset: 8px; border-radius: 6px; }
+
+  .env-back, .env-front, .flap { position: absolute; inset: 0; }
+  .env-back { background: var(--envelope-shade); border-radius: 6px; }
+  .env-front {
+    background: var(--envelope);
+    clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%);
+    border-radius: 6px;
+  }
+  .env-front::after { /* pliegues laterales */
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(to top right, transparent 49.6%, rgba(160,130,90,.25) 50%, transparent 50.6%) left / 50% 100% no-repeat,
+      linear-gradient(to top left,  transparent 49.6%, rgba(160,130,90,.25) 50%, transparent 50.6%) right / 50% 100% no-repeat;
+    clip-path: polygon(0 40%, 50% 100%, 100% 40%, 100% 100%, 0 100%);
+    opacity: .7;
+  }
+  .flap {
+    background: var(--envelope);
+    height: 56%;
+    bottom: auto;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transition: transform .7s cubic-bezier(.5,.1,.3,1), z-index 0s .3s;
+    z-index: 3;
+    backface-visibility: visible;
+  }
+  .flap::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(160,130,90,.0), rgba(160,130,90,.16));
+  }
+  .seal {
+    position: absolute;
+    left: 50%; top: 56%;
+    width: 17%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    transition: opacity .3s ease, transform .3s ease;
+    animation: beat 1.6s ease-in-out infinite;
+  }
+  .seal svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(120,30,40,.35)); }
+  @keyframes beat {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50%      { transform: translate(-50%, -50%) scale(1.12); }
+  }
+
+  .opening .flap { transform: rotateX(180deg); z-index: 0; }
+  .opening .seal { opacity: 0; animation: none; }
+
+  /* ---------- La carta ---------- */
+  .letter-wrap {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 104px) 1rem 1rem;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(60px) scale(.94);
+    transition: opacity .6s ease, transform .8s cubic-bezier(.2,.8,.2,1);
+  }
+  .letter {
+    width: min(520px, 100%);
+    max-height: calc(100vh - 130px);
+    max-height: calc(100dvh - 130px);
+    overflow-y: auto;
+    padding: clamp(1.6rem, 6vw, 2.8rem) clamp(1.4rem, 6vw, 2.8rem) 2rem;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 2.45rem, rgba(120,160,200,.28) 2.45rem calc(2.45rem + 1px)),
+      var(--paper);
+    border-radius: 4px;
+    box-shadow: 0 24px 50px rgba(59,58,82,.28), 0 2px 0 rgba(255,255,255,.7) inset;
+    font-family: "Caveat", cursive;
+    font-size: clamp(1.45rem, 4.6vw, 1.8rem);
+    line-height: 2.45rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: left;
+  }
+  .letter p { margin: 0 0 2.45rem; }
+  .letter .greeting { font-weight: 700; font-size: 1.2em; }
+  .letter .sign { margin-bottom: 0; }
+  .letter .name { font-weight: 700; font-size: 1.3em; margin-bottom: 1.2rem; }
+  .letter .ps { margin-bottom: 1.4rem; }
+  .letter figure { margin: 0; display: grid; place-items: center; }
+  .letter img {
+    width: min(250px, 70%);
+    height: auto;
+    display: block;
+    transform: rotate(-2deg);
+  }
+  .close-hint {
+    margin: 1.6rem 0 0;
+    font: 400 .9rem/1.2 "Fredoka", system-ui, sans-serif;
+    text-align: center;
+    opacity: .6;
+  }
+  .letter { cursor: pointer; }
+  .letter-wrap { cursor: pointer; }
+
+  /* ---------- Reproductor ---------- */
+  .player {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: 12px;
+    z-index: 20;
+    width: min(250px, calc(100vw - 24px));
+    padding: .45rem .9rem .55rem .6rem;
+    background: var(--paper);
+    border-radius: 20px;
+    box-shadow: 0 6px 14px rgba(59,58,82,.2);
+    color: var(--ink);
+    font-family: "Fredoka", system-ui, sans-serif;
+  }
+  .music {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .3rem .4rem;
+    font: 500 .95rem "Fredoka", system-ui, sans-serif;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .music:hover { background: rgba(59,58,82,.07); }
+  .music:focus-visible, .seek:focus-visible { outline: 3px solid var(--heart-deep); outline-offset: 3px; }
+  .music svg { width: 1.2rem; height: 1.2rem; fill: var(--heart-deep); flex: none; }
+  .music .i-pause { display: none; }
+  .music.playing .i-play { display: none; }
+  .music.playing .i-pause { display: block; }
+  .music.playing svg { animation: beat-icon 1.2s ease-in-out infinite; }
+  @keyframes beat-icon { 50% { transform: scale(1.18); } }
+
+  .seek {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 26px;
+    margin: .15rem 0 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    touch-action: none;
+    --pct: 0%;
+  }
+  .seek:disabled { opacity: .45; cursor: default; }
+  .seek::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 99px;
+    background: linear-gradient(to right, var(--heart) var(--pct), rgba(59,58,82,.18) var(--pct));
+  }
+  .seek::-moz-range-track {
+    height: 6px;
+    border-radius: 99px;
+    background: linear-gradient(to right, var(--heart) var(--pct), rgba(59,58,82,.18) var(--pct));
+  }
+  .seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--heart-deep);
+    border: 2px solid var(--paper);
+    box-shadow: 0 1px 4px rgba(59,58,82,.4);
+  }
+  .seek::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--heart-deep);
+    border: 2px solid var(--paper);
+    box-shadow: 0 1px 4px rgba(59,58,82,.4);
+  }
+  .times {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -.1rem;
+    font-size: .75rem;
+    opacity: .7;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Estados ---------- */
+  .read .stage { opacity: 0; transform: translateY(50px); pointer-events: none; }
+  .read .letter-wrap { opacity: 1; transform: none; pointer-events: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition-duration: .01s !important; transition-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+
+  <audio id="song" src="musica.mp3" preload="metadata" loop></audio>
+  <div class="player">
+    <button class="music" id="music" type="button" aria-pressed="false">
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      <span id="musicLabel">Poner música</span>
+    </button>
+    <input class="seek" id="seek" type="range" min="0" max="100" step="0.1" value="0" disabled aria-label="Elegir qué parte de la canción escuchar">
+    <div class="times" aria-hidden="true"><span id="tNow">0:00</span><span id="tTotal">0:00</span></div>
+  </div>
+
+  <main class="stage" id="stage">
+    <p class="for">Para Andy</p>
+
+    <button class="envelope" id="envelope" aria-label="Abrir la carta para Andy">
+      <span class="env-back"></span>
+      <span class="env-front"></span>
+      <span class="flap"></span>
+      <span class="seal" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path fill="#f27c88" d="M12 21s-8.5-5.1-8.5-11.2C3.5 6.6 5.8 4.5 8.4 4.5c1.6 0 3 .8 3.6 2 .6-1.2 2-2 3.6-2 2.6 0 4.9 2.1 4.9 5.3C20.5 15.9 12 21 12 21z"/></svg>
+      </span>
+    </button>
+
+    <p class="hint">Toca la carta para abrirla</p>
+  </main>
+
+  <section class="letter-wrap" id="letterWrap" aria-live="polite">
+    <article class="letter" id="letter" tabindex="-1">
+      <p class="greeting">Hola Andy:</p>
+      <p>Mucha suerte y mucho éxito en tu examen. Te va a ir muy bien, no te estreses mucho.</p>
+      <p class="sign">Atentamente y con mucho cariño,</p>
+      <p class="name">Pato</p>
+      <p class="ps">P.D. Te quiero mucho.</p>
+      <figure>
+        <img src="foto.png" alt="Dibujo de un patito redondito de color blanco con un corazón rosa en el pecho">
+      </figure>
+      <p class="close-hint">Toca la carta para cerrarla</p>
+    </article>
+  </section>
+
+<script>
+  (function () {
+    var body = document.body;
+    var envelope = document.getElementById("envelope");
+    var wrap = document.getElementById("letterWrap");
+    var letter = document.getElementById("letter");
+    var song = document.getElementById("song");
+    var music = document.getElementById("music");
+    var label = document.getElementById("musicLabel");
+    var seek = document.getElementById("seek");
+    var tNow = document.getElementById("tNow");
+    var tTotal = document.getElementById("tTotal");
+    var timer;
+
+    function openLetter() {
+      if (body.classList.contains("opening")) return;
+      envelope.classList.add("opening");
+      body.classList.add("opening");
+      timer = setTimeout(function () {
+        body.classList.add("read");
+        letter.scrollTop = 0;
+        letter.focus({ preventScroll: true });
+      }, 900);
+    }
+
+    function closeLetter() {
+      if (!body.classList.contains("read")) return;
+      clearTimeout(timer);
+      body.classList.remove("read");
+      setTimeout(function () {
+        envelope.classList.remove("opening");
+        body.classList.remove("opening");
+        envelope.focus({ preventScroll: true });
+      }, 450);
+    }
+
+    envelope.addEventListener("click", openLetter);
+    wrap.addEventListener("click", closeLetter);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeLetter();
+    });
+
+    function setPlaying(on) {
+      music.classList.toggle("playing", on);
+      music.setAttribute("aria-pressed", on ? "true" : "false");
+      label.textContent = on ? "Pausar música" : "Poner música";
+    }
+
+    function loadSong() { return true; }
+
+    function fmt(t) {
+      if (!isFinite(t)) return "0:00";
+      var m = Math.floor(t / 60), s = Math.floor(t % 60);
+      return m + ":" + (s < 10 ? "0" : "") + s;
+    }
+    function paint() {
+      var max = parseFloat(seek.max) || 1;
+      seek.style.setProperty("--pct", (seek.value / max * 100) + "%");
+      tNow.textContent = fmt(parseFloat(seek.value));
+    }
+    var scrubbing = false;
+    song.addEventListener("loadedmetadata", function () {
+      if (isFinite(song.duration)) {
+        seek.max = song.duration;
+        tTotal.textContent = fmt(song.duration);
+        seek.disabled = false;
+        paint();
+      }
+    });
+    song.addEventListener("timeupdate", function () {
+      if (scrubbing) return;
+      seek.value = song.currentTime;
+      paint();
+    });
+    seek.addEventListener("pointerdown", function () { scrubbing = true; });
+    ["pointerup", "pointercancel", "change", "blur"].forEach(function (ev) {
+      seek.addEventListener(ev, function () { scrubbing = false; });
+    });
+    seek.addEventListener("input", function () {
+      if (loadSong()) song.currentTime = parseFloat(seek.value);
+      paint();
+    });
+
+    music.addEventListener("click", function () {
+      if (!song.paused) {
+        song.pause();
+        setPlaying(false);
+        return;
+      }
+      if (!loadSong()) { label.textContent = "No se pudo cargar"; return; }
+      var p = song.play();
+      setPlaying(true);
+      if (p && p.catch) {
+        p.catch(function () {
+          setPlaying(false);
+          label.textContent = "Toca otra vez";
+        });
+      }
+    });
+      })();
+</script>
+</body>
+</html>
